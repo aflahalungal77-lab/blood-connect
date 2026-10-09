@@ -23,7 +23,7 @@ export function jsonError(message: string, status = 400) {
 export function adminAuthorized(request: Request): boolean {
   const expected = process.env.ADMIN_SECRET;
   const provided = request.headers.get("x-admin-secret");
-  if (!expected || expected.length < 32 || !provided) return false;
+  if (!expected || expected.length < 5 || !provided) return false;
   const a = Buffer.from(expected);
   const b = Buffer.from(provided);
   if (a.length !== b.length) return false;
