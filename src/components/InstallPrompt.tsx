@@ -19,24 +19,50 @@ export default function InstallPrompt({ appName }: InstallPromptProps) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const key = `install-dismissed-${appName}`;
+  
+useEffect(() => {
+  const key = `install-dismissed-${appName}`;
 
-    if (!sessionStorage.getItem(key)) {
-      setShow(true);
-    }
+  const isStandalone = () =>
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
-    const handleInstall = (event: Event) => {
-      event.preventDefault();
-      setInstallEvent(event as InstallEvent);
-    };
+  // Installed app ആണെങ്കിൽ popup കാണിക്കരുത്
+  if (isStandalone()) {
+    setShow(false);
+  } else if (!sessionStorage.getItem(key)) {
+    setShow(true);
+  }
 
-    window.addEventListener("beforeinstallprompt", handleInstall);
+  const handleInstall = (event: Event) => {
+    event.preventDefault();
+    setInstallEvent(event as InstallEvent);
+  };
 
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleInstall);
-    };
-  }, [appName]);
+  const handleAppInstalled = () => {
+    setShow(false);
+    setInstallEvent(null);
+    sessionStorage.setItem(key, "true");
+  };
+
+  window.addEventListener("beforeinstallprompt", handleInstall);
+  window.addEventListener("appinstalled", handleAppInstalled);
+
+  // Display mode മാറിയാൽ വീണ്ടും പരിശോധിക്കുക
+  const media = window.matchMedia("(display-mode: standalone)");
+
+  const handleDisplayChange = () => {
+    if (isStandalone()) setShow(false);
+  };
+
+  media.addEventListener("change", handleDisplayChange);
+
+  return () => {
+    window.removeEventListener("beforeinstallprompt", handleInstall);
+    window.removeEventListener("appinstalled", handleAppInstalled);
+    media.removeEventListener("change", handleDisplayChange);
+  };
+}, [appName]);
 
   async function install() {
     if (!installEvent) {
@@ -53,9 +79,10 @@ export default function InstallPrompt({ appName }: InstallPromptProps) {
       await installEvent.prompt();
       const result = await installEvent.userChoice;
 
-      if (result.outcome === "accepted") {
-        setShow(false);
-      }
+if (result.outcome === "accepted") {
+  setShow(false);
+  sessionStorage.setItem(`install-dismissed-${appName}`, "true");
+}
       setInstallEvent(null);
     } catch {
       setMessage("Installation ഇപ്പോൾ ആരംഭിക്കാനായില്ല. വീണ്ടും ശ്രമിക്കൂ.");
