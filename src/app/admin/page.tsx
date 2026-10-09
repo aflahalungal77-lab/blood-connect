@@ -1,4 +1,5 @@
  "use client";
+import InstallPrompt from "@/components/InstallPrompt";
 import { useState } from "react";
 type Item = Record<string, any> & {id:string};
 export default function AdminPage(){
@@ -8,7 +9,9 @@ export default function AdminPage(){
  async function load(){setMessage("");const r=await fetch("/api/admin",{headers:{"x-admin-secret":secret},cache:"no-store"});const d=await r.json();if(!r.ok){setMessage(d.error||"Access denied");setUnlocked(false);return;}setDonors(d.donors);setRequests(d.requests);setUnlocked(true);}
  async function action(collection:"donors"|"requests",id:string,status:string,requestStatus?:string){const r=await fetch("/api/admin",{method:"PATCH",headers:{"Content-Type":"application/json","x-admin-secret":secret},body:JSON.stringify({collection,id,status,requestStatus})});const d=await r.json();setMessage(r.ok?"Updated successfully":d.error||"Update failed");if(r.ok)await load();}
  async function remove(collection:"donors"|"requests",id:string){if(!confirm("Permanently delete this record?"))return;const r=await fetch("/api/admin",{method:"DELETE",headers:{"Content-Type":"application/json","x-admin-secret":secret},body:JSON.stringify({collection,id})});const d=await r.json();setMessage(r.ok?"Record deleted":d.error||"Delete failed");if(r.ok)await load();}
- return <main className="container admin-wrap"><a className="brand" href="/"><span className="brand-mark">♥</span><span>Blood Connect<br/><small style={{fontWeight:500,color:"#7b808a"}}>ADMIN CONSOLE</small></span></a>
+ return <main className="container admin-wrap">
+    <InstallPrompt appName="Blood Connect Admin" />
+    <a className="brand" href="/"><span className="brand-mark">♥</span><span>Blood Connect<br/><small style={{fontWeight:500,color:"#7b808a"}}>ADMIN CONSOLE</small></span></a>
  <div style={{marginTop:35}}><h1 style={{marginBottom:5}}>Admin dashboard</h1><p className="muted">Review donor registrations and emergency requests. This dashboard does not use user sessions; every API action requires the server-side admin secret.</p></div>
  {!unlocked?<div className="panel" style={{maxWidth:520,marginTop:22}}><div className="field"><label>Admin secret</label><input type="password" value={secret} onChange={e=>setSecret(e.target.value)} autoComplete="off" placeholder="Enter ADMIN_SECRET"/></div><button className="btn" style={{marginTop:14}} onClick={load}>Unlock dashboard</button>{message&&<p className="notice error">{message}</p>}<p className="muted" style={{fontSize:12}}>Never share this secret. Set a long random value in your hosting provider's environment variables.</p></div>:
  <>

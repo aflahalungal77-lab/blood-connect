@@ -1,6 +1,6 @@
 
 "use client";
-
+import InstallPrompt from "@/components/InstallPrompt";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const groups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
@@ -234,6 +234,7 @@ export default function Home() {
   return (
     <main>
       {/* Desktop / top navigation */}
+      <InstallPrompt appName="Blood Connect" />
       <header className="container nav">
         <a className="brand" href="#home" aria-label="Blood Connect home">
           <span className="brand-mark">♥</span>
